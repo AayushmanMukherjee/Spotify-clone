@@ -18,7 +18,7 @@ function secondsToMinutesSeconds(seconds) {
 
 async function getSongs(folder) {
     currentFolder=folder;
-    let a = await fetch(`http://127.0.0.1:3000/${folder}`);
+    let a = await fetch(`/${folder}/`);
     let response = await a.text();
     let div = document.createElement("div");
     div.innerHTML = response;
@@ -46,15 +46,38 @@ async function getSongs(folder) {
 }
 
 function playMusic(track, pause=false) {
-    currentSong.src = `http://127.0.0.1:3000/${currentFolder}/${track}`;
+    currentSong.src = `/${currentFolder}/`+track;
     if (!pause) {
         currentSong.play();
         play.src="images/pause.svg";
     }
     document.querySelector(".info").innerHTML=track.replace(".mp3", "").replaceAll("%20"," ");
 }
-  //cards
-function displayMusic() {
+//cards
+async function displayMusic() {
+    let a = await fetch(`/songs/`);
+    let response = await a.text();
+    let div = document.createElement("div")
+    div.innerHTML = response;
+    let anchors = div.getElementsByTagName("a")
+    let rightSection = document.querySelector(".right-section")
+    let arr = Array.from(anchors)
+    for (let i=0;i<arr.length;i++) {
+        const e = arr[i]
+        if (e.href.includes("/songs") && !e.href.includes(".htaccess")){
+            let folder = e.href.split("/").slice(-2)[0];
+            let a = await fetch(`songs/${folder}/info.json`);
+            let response = await a.json();
+            rightSection.innerHTML = rightSection.innerHTML + `<div data-folder="${folder}" class="card">
+            <img src="songs/${folder}/cover.jpg" alt="">
+            <div class="play-button">
+                <img src="images/play2.svg" alt="Play button">
+            </div>
+            <h3>${response.title}</h3>
+            <p>${response.description}</p>
+        </div>`
+        }
+    }
     Array.from(document.getElementsByClassName("card")).forEach(e=> {
         e.addEventListener("click", async (e1) => {
             songs = await getSongs(`songs/${e1.currentTarget.dataset.folder}`);
@@ -65,7 +88,7 @@ function displayMusic() {
 
 async function main() {
     // await getSongs();
-    displayMusic();
+    await displayMusic();
 
     //event listener to play bar's play button
     play.addEventListener("click", ()=> {
@@ -115,4 +138,4 @@ async function main() {
   
 }
 
-main();
+main()
